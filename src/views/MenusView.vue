@@ -93,10 +93,30 @@ watch(
 
 .card-container {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   width: 100%;
-  max-width: 400px;
+  max-width: 800px;
+}
+
+.card-container > * {
+  flex: 1 1 45%;
+}
+
+
+/* 기본은 column 방향 */
+@media (max-width: 600px) {
+  .card-container {
+    flex-direction: column;
+  }
+}
+
+/* 넓은 화면에서는 row 방향 */
+@media (min-width: 601px) {
+  .card-container {
+    flex-direction: row;
+  }
 }
 
 .instruction {
