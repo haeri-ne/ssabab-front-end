@@ -33,11 +33,34 @@
       </v-row>
 
       <div class="text-center mt-4">
-        <v-btn color="primary" class="px-5" @click="submitReview">
+        <v-btn
+          color="primary"
+          class="px-5"
+          :loading="loading"
+          :disabled="loading"
+          @click="submitReview"
+        >
           제출
         </v-btn>
       </div>
     </v-card>
+
+    <!-- ✅ 로딩 오버레이 -->
+    <v-overlay
+      :model-value="loading"
+      class="custom-overlay d-flex align-center justify-center"
+      persistent
+    >
+      <div class="text-center">
+        <v-progress-circular
+          indeterminate
+          size="50"
+          width="6"
+          color="primary"
+        />
+        <div class="mt-3 text-subtitle-1 font-weight-medium text-white">로딩 중입니다...</div>
+      </div>
+    </v-overlay>
   </v-container>
 </template>
 
@@ -54,6 +77,7 @@ const props = defineProps({
 
 const router = useRouter()
 const logStore = useLogStore()
+const loading = ref(false)
 
 const reviewData = ref(
   props.menu.foods.map((food) => ({
@@ -91,6 +115,8 @@ const getStarIcon = (score, index) => {
 }
 
 const submitReview = async () => {
+  loading.value = true
+
   const uuid = localStorage.getItem('uuid') || (() => {
     const newId = crypto.randomUUID()
     localStorage.setItem('uuid', newId)
@@ -100,7 +126,10 @@ const submitReview = async () => {
   const unReviewedItems = reviewData.value.filter((item) => item.score === 0)
   if (unReviewedItems.length > 0) {
     const confirmSubmit = confirm('평가가 완료되지 않았습니다. 그래도 제출하시겠습니까?')
-    if (!confirmSubmit) return
+    if (!confirmSubmit) {
+      loading.value = false
+      return
+    }
   }
 
   const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/v1/foods/score`
@@ -114,11 +143,15 @@ const submitReview = async () => {
         headers: { 'user-id': uuid }
       })
     }
+
+    // await new Promise(resolve => setTimeout(resolve, 3000))
+
+    router.push({ name: 'review-completed' })
   } catch (error) {
     console.error('리뷰 POST 실패:', error)
+  } finally {
+    loading.value = false
   }
-
-  router.push({ name: 'review-completed' })
 }
 </script>
 
@@ -131,5 +164,11 @@ const submitReview = async () => {
 }
 .star-icon:hover {
   transform: scale(1.15);
+}
+
+/* ✅ 커스텀 오버레이 배경 */
+.custom-overlay {
+  background-color: rgba(50, 50, 50, 0.6); /* 약간 어두운 회색 투명 배경 */
+  z-index: 9999;
 }
 </style>
