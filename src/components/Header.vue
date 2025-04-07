@@ -18,6 +18,13 @@
           {{ dateStore.date }}
         </p>
       </div>
+      
+      <v-icon
+        icon="mdi-chart-bar"
+        size="32"
+        class="cursor-pointer me-2"
+        @click="showAnalysisAlert"
+      />
 
       <!-- 캘린더 아이콘 + Vuetify 날짜 선택 -->
       <v-menu
@@ -53,6 +60,11 @@ import { useRouter } from 'vue-router'
 import { useDateStore } from '../store/dateStore'
 import { formatKSTDate, getKSTDateTimeStringWithMs, formatToYYYYMMDD } from '../utils/KSTDate'
 import { useLogStore } from '../store/logStore'
+
+const showAnalysisAlert = () => {
+  alert('빠르게 개발중입니다!!')
+}
+
 
 const router = useRouter()
 const dateStore = useDateStore()
