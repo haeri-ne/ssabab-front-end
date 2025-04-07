@@ -31,6 +31,15 @@
           </div>
         </v-col>
       </v-row>
+      
+      <!-- <v-textarea
+        v-model="additionalComment"
+        label="한 줄 리뷰 (선택사항)"
+        rows="3"
+        auto-grow
+        outlined
+        class="mt-5 mb-4 ml-4 mr-4"
+      /> -->
 
       <div class="text-center mt-4">
         <v-btn
