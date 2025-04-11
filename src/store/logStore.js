@@ -1,37 +1,34 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { getOrCreateUUID } from '../utils/uuidUtil'
 import axios from 'axios'
 
 export const useLogStore = defineStore('log', () => {
-  const logs = ref([])
+  const logs = ref([]) 
 
+  // 로그 추가
   const addLog = (log) => {
     if (log.event_value === null) log.event_value = {} // null → {}
     logs.value.push(log)
   }
 
+  // 로그 전송
   const sendLogs = async () => {
     if (logs.value.length === 0) return
 
-    const remainingLogs = []
     const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/v1/logs/front`
+    const uuid = getOrCreateUUID()
 
-    for (const log of logs.value) {
-      try {
-        await axios.post(API_URL, log, {
-          headers: {
-            'Content-Type': 'application/json',
-            'user-id': log.user_id
-          }
-        })
-        // console.log('로그 전송 성공:', log)
-      } catch (error) {
-        console.error('로그 전송 실패:', error.response?.data || error)
-        remainingLogs.push(log) // 실패한 건 남겨둠
-      }
+    try {
+      await axios.post(API_URL, logs.value, {
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': uuid
+        }
+      })
+    } catch (error) {
+      console.error('로그 전송 실패:', error)
     }
-
-    logs.value = remainingLogs // 실패한 로그만 다시 보낼 수 있도록 보관
   }
 
   return {

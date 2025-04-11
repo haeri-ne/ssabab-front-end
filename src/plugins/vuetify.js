@@ -1,7 +1,9 @@
 import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
+import { ko } from 'vuetify/locale'
 import '@mdi/font/css/materialdesignicons.css'
+
 
 export default createVuetify({
   icons: {
@@ -16,4 +18,8 @@ export default createVuetify({
       },
     },
   },
+  locale: {
+    locale: 'ko',
+    messages: { ko }
+  }
 })

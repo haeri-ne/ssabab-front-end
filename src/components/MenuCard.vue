@@ -7,6 +7,12 @@
   >
     <!-- 제목 -->
     <div class="card-title">오늘의 메뉴</div>
+    
+    <!-- 평균 평점 -->
+    <div class="text-caption text-center mb-2">
+      평균 별점 ⭐ {{ props.menu.avg_score.toFixed(1) }}
+    </div>
+
     <v-divider class="my-1" />
 
     <!-- 메뉴 리스트 (6개 고정) -->
@@ -16,8 +22,11 @@
         :key="index"
         class="text-center px-0 py-0"
       >
-        <v-list-item-title class="text-body-2">
-          {{ food.name }}
+        <v-list-item-title class="text-body-2 d-flex justify-space-between px-3">
+          <span>{{ food.name }}</span>
+          <span v-if="food.name" class="text-caption font-weight-medium">
+            ⭐ {{ food.score.toFixed(0) }}
+          </span>
         </v-list-item-title>
       </v-list-item>
     </v-list>
@@ -27,10 +36,11 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useMenuStore } from '../store/menuStore'
 import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
-import { getKSTDateTimeStringWithMs } from '../utils/KSTDate'
+import { useMenuStore } from '../store/menuStore'
+import { toKSTDateTime } from '../utils/timeUtil'
+import { getOrCreateUUID } from '../utils/uuidUtil'
 
 const props = defineProps({
   menu: Object,
@@ -38,9 +48,10 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const menuStore = useMenuStore()
+
 const dateStore = useDateStore()
 const logStore = useLogStore()
+const menuStore = useMenuStore()
 
 const paddedFoods = computed(() => {
   const foods = props.menu?.foods || []
@@ -48,27 +59,23 @@ const paddedFoods = computed(() => {
 })
 
 const goToReview = () => {
-  menuStore.selectedMenu = props.menu
+  menuStore.selectedMenuIndex = props.menuIndex
 
-  const uuid = localStorage.getItem('uuid') || (() => {
-    const newId = crypto.randomUUID()
-    localStorage.setItem('uuid', newId)
-    return newId
-  })()
+  const uuid = getOrCreateUUID()
 
   logStore.addLog({
     user_id: uuid,
     event_name: 'click_menu',
-    event_value: { menu_id: props.menu.id },
+    event_value: { menu_id: props.menu.menu_id },
     page_name: 'menus_view',
-    event_time: getKSTDateTimeStringWithMs(new Date())
+    event_time: toKSTDateTime(new Date())
   })
 
   router.push({
     name: 'review',
     params: {
       date: dateStore.date,
-      menuIndex: props.menuIndex
+      menuId: props.menu.menu_id
     }
   })
 }

@@ -9,11 +9,12 @@
 </template>
 
 <script setup>
+import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { onMounted, ref, watch } from 'vue'
 import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
-import { formatKSTDate, getKSTDateTimeStringWithMs } from '../utils/KSTDate'
+import { toKSTDateTime } from '../utils/timeUtil'
+import { getOrCreateUUID } from '../utils/uuidUtil'
 
 const router = useRouter()
 const route = useRoute()
@@ -24,18 +25,14 @@ const logStore = useLogStore()
 const isFading = ref(false)
 
 onMounted(() => {
-  const uuid = localStorage.getItem('uuid') || (() => {
-      const newId = crypto.randomUUID()
-      localStorage.setItem('uuid', newId)
-      return newId
-  })()
+  const uuid = getOrCreateUUID()
 
   logStore.addLog({
     user_id: uuid,
     event_name: 'view_home_screen',
     event_value: {},
     page_name: 'home_view',
-    event_time: getKSTDateTimeStringWithMs(new Date()),
+    event_time: toKSTDateTime(new Date()),
   })
 
   // 1초 후 이미지 페이드 아웃 시작
@@ -45,9 +42,8 @@ onMounted(() => {
 
   // 1.5초 후 날짜 저장 및 메뉴 페이지로 이동
   setTimeout(() => {
-    const today = formatKSTDate(new Date())
-    dateStore.setDate(today)
-    router.replace(`/menus/${today}`)
+    dateStore.setDate(new Date())
+    router.push(`/menus/${dateStore.date}`)
   }, 1500)
 })
 
@@ -56,18 +52,14 @@ watch(
   (newPath, oldPath) => {
     if (newPath === '/' && oldPath !== '/') {
       // 뒤로 가기로 홈 화면에 다시 진입했을 때 실행
-      const uuid = localStorage.getItem('uuid') || (() => {
-        const newId = crypto.randomUUID()
-        localStorage.setItem('uuid', newId)
-        return newId
-      })()
+      const uuid = getOrCreateUUID()
 
       logStore.addLog({
         user_id: uuid,
         event_name: 'view_home_screen',
         event_value: {},
         page_name: 'home_view',
-        event_time: getKSTDateTimeStringWithMs(new Date()),
+        event_time: toKSTDateTime(new Date()),
       })
     }
   }
