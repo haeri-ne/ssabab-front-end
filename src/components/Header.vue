@@ -48,18 +48,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDateStore } from '../store/dateStore'
-import { formatKSTDate, getKSTDateTimeStringWithMs, formatToYYYYMMDD } from '../utils/KSTDate'
 import { useLogStore } from '../store/logStore'
+import { toKSTDateTime } from '../utils/timeUtil'
+import { getOrCreateUUID } from '../utils/uuidUtil'
 
 const router = useRouter()
+
 const dateStore = useDateStore()
 const logStore = useLogStore()
 
 const menu = ref(false)
-const selectedDate = ref(dateStore.date)
+const selectedDate = computed({
+  get: () => dateStore.date,
+  set: (val) => {
+    dateStore.setDate(val)
+  }
+})
 const lastSelectedDate = ref(dateStore.date)
 
 const url = window.location.href
@@ -69,46 +76,41 @@ const page_name = ref(
   ''
 )
 
-const uuid = localStorage.getItem('uuid') || (() => {
-  const newId = crypto.randomUUID()
-  localStorage.setItem('uuid', newId)
-  return newId
-})()
+const uuid = getOrCreateUUID()
 
 // 홈 버튼 클릭
 const goToHome = () => {
-  const today = formatKSTDate(new Date())
-  dateStore.setDate(today)
-  selectedDate.value = today
+  dateStore.setDate(new Date())
+  selectedDate.value = dateStore.date
 
   logStore.addLog({
     user_id: uuid,
     event_name: 'click_home_button',
     event_value: {},
     page_name: page_name.value,
-    event_time: getKSTDateTimeStringWithMs(new Date()),
+    event_time: toKSTDateTime(new Date()),
   })
 
-  router.push({ name: 'menus', params: { date: today } })
+  router.push({ name: 'menus', params: { date: dateStore.date } })
 }
 
 // 날짜 변경 시 동작
 const onDateChange = (newDate) => {
-  const formatted = formatToYYYYMMDD(newDate)
+  const formatted = new Date(newDate)
 
   if (formatted && formatted !== lastSelectedDate.value) {
-    lastSelectedDate.value = formatted
     dateStore.setDate(formatted)
+    lastSelectedDate.value = dateStore.date
 
     logStore.addLog({
       user_id: uuid,
       event_name: 'click_calendar',
-      event_value: { selected_date: formatted },
+      event_value: { selected_date: dateStore.date },
       page_name: page_name.value,
-      event_time: getKSTDateTimeStringWithMs(new Date()),
+      event_time: toKSTDateTime(new Date()),
     })
 
-    router.push({ name: 'menus', params: { date: formatted } })
+    router.push({ name: 'menus', params: { date: dateStore.date } })
   }
 
   menu.value = false
