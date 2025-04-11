@@ -38,7 +38,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
-body {
-  font-family: 'Pretendard Variable', sans-serif;
+html, body, * {
+  font-family: 'Pretendard Variable', sans-serif !important;
 }
 </style>
