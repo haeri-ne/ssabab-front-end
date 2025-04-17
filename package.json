@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
+    "@vercel/analytics": "^1.5.0",
     "axios": "^1.8.4",
     "bootstrap": "^5.3.5",
     "pinia": "^3.0.1",

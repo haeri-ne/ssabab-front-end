@@ -26,7 +26,7 @@ def twaManifest = [
     launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
     name: 'SSABAB', // The application name.
     launcherName: 'SSABAB', // The name shown on the Android Launcher.
-    themeColor: '#42B883', // The color used for the status bar.
+    themeColor: '#2B9FED', // The color used for the status bar.
     themeColorDark: '#000000', // The color used for the dark status bar.
     navigationColor: '#000000', // The color used for the navigation bar.
     navigationColorDark: '#000000', // The color used for the dark navbar.
