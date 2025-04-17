@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/((?!icons|images|manifest).*)",
+      "destination": "/"
+    }
   ]
 }
