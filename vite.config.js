@@ -15,23 +15,24 @@ export default defineConfig({
         name: 'SSABAB',
         short_name: 'SSABAB',
         start_url: '/',
-        display: 'standalone',
+        display: 'fullscreen',
         background_color: '#ffffff',
-        theme_color: '#42b883',
+        theme_color: '#2b9fed',
         icons: [
           {
-            src: '/src/assets/ssabab-icon.png',
+            src: 'https://ssabab.com/icons/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/src/assets/ssabab-icon.png',
+            src: 'https://ssabab.com/icons/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
           },
-        ],
+        ]        
       }
     })
+    
   ],
   base: '/',
 })
