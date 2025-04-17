@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <!-- 헤더 -->
-    <Header />
+    <!-- <Header /> -->
 
     <!-- 리뷰 카드 영역 -->
     <v-main>
