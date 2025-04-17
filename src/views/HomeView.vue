@@ -1,80 +1,81 @@
 <template>
-  <div class="container d-flex flex-column justify-content-center align-items-center vh-100">
-    <img
-      src="../assets/ssabab-icon.png"
-      class="fade-image"
-      :class="{ 'fade-out': isFading }"
-    />
-  </div>
+  <v-container class="py-10 px-4 home-container">
+    <!-- 🔰 로고 배너 (5초 후 자동 사라짐) -->
+    <v-row justify="center" class="mb-8" v-if="showBanner">
+      <div class="text-center">
+        <v-card class="pa-4" flat tile>
+          <v-img
+            src="/ssabab-icon.png"
+            alt="SSABAB 로고"
+            width="300"
+            class="banner-img"
+            contain
+          />
+        </v-card>
+        <p class="banner-caption">5초 후에 배너가 닫힙니다</p>
+      </div>
+    </v-row>
+
+    <!-- 📌 SSABAB 한 줄 소개 -->
+    <v-card class="pa-6 mb-6 text-center" elevation="2" rounded="xl">
+      <h1 class="text-h6 font-weight-bold mb-2">SSABAB</h1>
+      <p>
+        SSAFY 대전 캠퍼스의 점심 메뉴를 더 맛있게 선택할 수 있도록,<br>
+        사용자 평가 기반으로 메뉴를 추천하는 스마트 식단 분석 서비스입니다.<br>
+        실패 없는 점심, 싸밥이 도와드릴게요! 🍱✨
+      </p>
+    </v-card>
+
+    <!-- 📢 공지사항 -->
+    <v-card class="pa-6 mb-6" elevation="2" rounded="xl">
+      <h2 class="text-subtitle-1 font-weight-bold mb-2">📢 공지사항</h2>
+      <p class="mb-1">🔔 <strong>2025.04.20</strong> - SSABAB 버전 1 배포 예정 🎉</p>
+      <p class="mb-1">📨 기능 오류나 개선 요청은 mm을 통해 전달해주세요!!</p>
+    </v-card>
+
+    <!-- 🛠️ 앞으로의 업데이트 -->
+    <v-card class="pa-6 mb-6" elevation="2" rounded="xl">
+      <h2 class="text-subtitle-1 font-weight-bold mb-2">🛠️ 앞으로 추가될 기능</h2>
+      <ul class="ml-4">
+        <li>✨ 사용자 맞춤형 메뉴 추천 기능</li>
+        <li>📊 실시간 인기 메뉴/음료 분석</li>
+        <li>🧠 메뉴와 음료 통합 추천을 위한 군집 기반 분석</li>
+        <li>💬 사용자 한 줄 리뷰 분석 및 감성 요약</li>
+      </ul>
+    </v-card>
+  </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useDateStore } from '../store/dateStore'
-import { useLogStore } from '../store/logStore'
-import { toKSTDateTime } from '../utils/timeUtil'
-import { getOrCreateUUID } from '../utils/uuidUtil'
+import { ref, onMounted } from 'vue'
 
-const router = useRouter()
-const route = useRoute()
-
-const dateStore = useDateStore()
-const logStore = useLogStore()
-
-const isFading = ref(false)
+const showBanner = ref(true)
 
 onMounted(() => {
-  const uuid = getOrCreateUUID()
-
-  logStore.addLog({
-    user_id: uuid,
-    event_name: 'view_home_screen',
-    event_value: {},
-    page_name: 'home_view',
-    event_time: toKSTDateTime(new Date()),
-  })
-
-  // 1초 후 이미지 페이드 아웃 시작
   setTimeout(() => {
-    isFading.value = true
-  }, 1000)
-
-  // 1.5초 후 날짜 저장 및 메뉴 페이지로 이동
-  setTimeout(() => {
-    dateStore.setDate(new Date())
-    router.push(`/menus/${dateStore.date}`)
-  }, 1500)
+    showBanner.value = false
+  }, 5000)
 })
-
-watch(
-  () => route.fullPath,
-  (newPath, oldPath) => {
-    if (newPath === '/' && oldPath !== '/') {
-      // 뒤로 가기로 홈 화면에 다시 진입했을 때 실행
-      const uuid = getOrCreateUUID()
-
-      logStore.addLog({
-        user_id: uuid,
-        event_name: 'view_home_screen',
-        event_value: {},
-        page_name: 'home_view',
-        event_time: toKSTDateTime(new Date()),
-      })
-    }
-  }
-)
 </script>
 
 <style scoped>
-.fade-image {
-  max-width: 80%;
-  height: auto;
-  opacity: 1;
-  transition: opacity 0.5s ease-in-out;
+.home-container {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.fade-out {
-  opacity: 0;
+ul {
+  padding-left: 1rem;
+  list-style-type: disc;
+}
+
+.banner-img {
+  border-radius: 12px;
+}
+
+.banner-caption {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 8px;
 }
 </style>

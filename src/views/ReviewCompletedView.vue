@@ -60,7 +60,7 @@ const goToHome = () => {
     event_time: toKSTDateTime(new Date()),
   })
 
-  router.push({ name: 'menus', params: { date: dateStore.date } })
+  router.push({ name: 'home-page' })
 }
 </script>
 
