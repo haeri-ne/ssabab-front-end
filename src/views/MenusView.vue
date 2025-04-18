@@ -1,6 +1,6 @@
 <template>
   <div class="menus-view">
-    <Header />
+    <!-- <Header /> -->
 
     <div class="main-content">
       <div class="card-grid">
@@ -92,24 +92,26 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* ← 위쪽 정렬로 수정 */
   gap: 16px;
-  min-height: calc(100vh - 64px); /* 헤더 높이 고려 */
+  min-height: 100vh;
 }
 
+/* ✅ 카드 전체를 감싸는 영역에 최대 너비 제한 */
 .card-grid {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 400px;
+  max-width: 800px;     /* 최대 너비 제한 */
+  padding: 0 16px;       /* 양옆 여백 */
+  margin: 0 auto;        /* 가운데 정렬 */
 }
 
 @media (min-width: 768px) {
   .card-grid {
     flex-direction: row;
     justify-content: center;
-    max-width: none;
     gap: 24px;
   }
 }

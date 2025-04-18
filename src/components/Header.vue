@@ -1,26 +1,25 @@
 <template>
-  <div class="bg-primary text-white sticky-top shadow-sm">
-    <div class="d-flex justify-between align-center px-4 py-3">
-      <!-- 홈 아이콘 -->
-      <v-icon
-        icon="mdi-home"
-        size="35"
-        class="cursor-pointer"
-        @click="goToHome"
-      ></v-icon>
+  <v-app-bar app flat elevation="0" class="header-bar">
+    <v-container class="d-flex justify-between align-center py-2" fluid>
+
+      <!-- 햄버거 아이콘 -->
+      <v-app-bar-nav-icon
+        @click="$emit('toggle-sidebar')"
+        color="black"
+        class="me-2"
+      />
 
       <!-- 제목 + 날짜 -->
       <div class="d-flex flex-column align-center justify-center text-center flex-grow-1">
-        <h3 class="mb-1 fw-bold title-text">
-          SSAFY 대전캠퍼스 식단표
-        </h3>
-        <p class="text-white text-opacity-75 mb-0">
+        <h3 class="header-title">SSABAB</h3>
+        <p v-if="isMenusPage" class="header-date">
           {{ dateStore.date }}
         </p>
       </div>
 
-      <!-- 캘린더 아이콘 + Vuetify 날짜 선택 -->
+      <!-- 오른쪽 캘린더 아이콘 OR placeholder -->
       <v-menu
+        v-if="isMenusPage"
         v-model="menu"
         :close-on-content-click="false"
         transition="scale-transition"
@@ -32,8 +31,9 @@
           <v-icon
             v-bind="props"
             icon="mdi-calendar"
-            size="35"
+            size="28"
             class="cursor-pointer"
+            color="black"
           ></v-icon>
         </template>
         <v-date-picker
@@ -43,58 +43,44 @@
           locale="ko"
         ></v-date-picker>
       </v-menu>
-    </div>
-  </div>
+
+      <!-- 메뉴 페이지가 아닐 경우 우측 공간 확보 -->
+      <div
+        v-else
+        style="width: 48px; height: 48px; visibility: hidden;"
+      ></div>
+
+    </v-container>
+  </v-app-bar>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
 import { toKSTDateTime } from '../utils/timeUtil'
 import { getOrCreateUUID } from '../utils/uuidUtil'
 
+const route = useRoute()
 const router = useRouter()
+
+const isMenusPage = computed(() => route.path.startsWith('/menus/'))
 
 const dateStore = useDateStore()
 const logStore = useLogStore()
-
 const menu = ref(false)
+
 const selectedDate = computed({
   get: () => dateStore.date,
   set: (val) => {
     dateStore.setDate(val)
   }
 })
+
 const lastSelectedDate = ref(dateStore.date)
-
-const url = window.location.href
-const page_name = ref(
-  url.includes('menus') ? 'menus_view' :
-  url.includes('review') ? 'review_view' :
-  ''
-)
-
 const uuid = getOrCreateUUID()
 
-// 홈 버튼 클릭
-const goToHome = () => {
-  dateStore.setDate(new Date())
-  selectedDate.value = dateStore.date
-
-  logStore.addLog({
-    user_id: uuid,
-    event_name: 'click_home_button',
-    event_value: {},
-    page_name: page_name.value,
-    event_time: toKSTDateTime(new Date()),
-  })
-
-  router.push({ name: 'menus', params: { date: dateStore.date } })
-}
-
-// 날짜 변경 시 동작
 const onDateChange = (newDate) => {
   const formatted = new Date(newDate)
 
@@ -106,7 +92,7 @@ const onDateChange = (newDate) => {
       user_id: uuid,
       event_name: 'click_calendar',
       event_value: { selected_date: dateStore.date },
-      page_name: page_name.value,
+      page_name: route.name || '',
       event_time: toKSTDateTime(new Date()),
     })
 
@@ -118,14 +104,33 @@ const onDateChange = (newDate) => {
 </script>
 
 <style scoped>
-.title-text {
-  white-space: nowrap;
-  font-size: 1.5rem;
+.header-bar {
+  background-color: white !important;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #212121;
+  font-family: 'Pretendard Variable', sans-serif;
+  margin-bottom: 0.2rem;
+}
+
+.header-date {
+  font-size: 0.85rem;
+  color: #666;
+  font-family: 'Pretendard Variable', sans-serif;
+  margin: 0;
 }
 
 @media (max-width: 576px) {
-  .title-text {
+  .header-title {
     font-size: 1.1rem;
+  }
+
+  .header-date {
+    font-size: 0.75rem;
   }
 }
 </style>
