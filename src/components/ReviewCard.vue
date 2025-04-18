@@ -1,47 +1,63 @@
 <template>
-  <v-card class="review-card compact" elevation="2" rounded="xl" v-if="menu">
-    <h3 class="text-center mb-3 text-primary text-subtitle-1 font-weight-bold">
+  <v-card class="review-card" elevation="2" rounded="xl" v-if="menu">
+    <!-- 제목 -->
+    <h3 class="text-center mb-1 text-h6 font-weight-bold text-primary">
       별점을 남겨주세요 :)
     </h3>
-
+    
+    <!-- 평균 평점 -->
+    <p
+      v-if="reviewData.avg_score !== undefined"
+      class="text-center mb-2 text-grey-darken-1 text-caption"
+    >
+      현재 평균 평점: {{ reviewData.avg_score.toFixed(1) }}점
+    </p>
+    
+    <!-- 음식 별점 입력 -->
     <v-row dense>
       <v-col
-        v-for="(item, index) in menu.foods"
+        v-for="(item, index) in reviewData.foods"
         :key="item.id"
         cols="12"
         class="py-1"
-      >
-        <div class="text-center">
+        >
+        <div class="text-center mb-1">
           <span class="text-body-2 font-weight-medium">{{ item.name }}</span>
           <span class="text-caption text-grey-darken-1 ms-1">{{ item.score }}</span>
         </div>
-
-        <div class="d-flex justify-center mt-1">
+        
+        <div class="d-flex justify-center">
           <v-icon
-            v-for="n in 5"
-            :key="n"
-            :icon="getStarIcon(item.score, n)"
-            class="star-icon mx-1"
-            @click="setScore(index, n)"
+          v-for="n in 5"
+          :key="n"
+          :icon="getStarIcon(item.score, n)"
+          class="star-icon mx-1"
+          @click="setScore(index, n)"
           />
         </div>
       </v-col>
     </v-row>
-
+    
+    <!-- 한줄평 -->
     <v-textarea
-      v-model="comment"
-      variant="outlined"
-      auto-grow
-      rows="2"
-      counter
-      maxlength="200"
-      class="mt-6"
-      color="primary"
-      placeholder="소감을 남겨주세요 :)"
+    v-model="reviewData.comment"
+    variant="outlined"
+    auto-grow
+    rows="2"
+    counter
+    maxlength="200"
+    class="mt-6 rounded-lg"
+    color="primary"
+    placeholder="소감을 남겨주세요 :)"
     />
 
-    <div class="text-center mt-2">
-      <v-btn color="primary" class="px-6 py-1 text-body-2" @click="submitReview">
+    <!-- 제출 버튼 -->
+    <div class="text-center mt-4">
+      <v-btn
+        color="primary"
+        class="px-8 py-2 text-body-2 rounded-pill elevation-1"
+        @click="submitReview"
+      >
         제출
       </v-btn>
     </div>
@@ -49,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
@@ -63,28 +79,56 @@ const props = defineProps({
 })
 
 const router = useRouter()
-
 const dateStore = useDateStore()
 const logStore = useLogStore()
 const menuStore = useMenuStore()
 
-const menu = computed(() => menuStore.menus[props.menuIndex])
+const menu = ref(null)
+
+// 독립적인 평가 상태 객체
+const reviewData = ref({
+  menu_id: null,
+  foods: [],
+  comment: '',
+  avg_score: 0
+})
+
+// menuStore로부터 읽기 전용 데이터 복사
+watchEffect(() => {
+  const source = menuStore.menus[props.menuIndex]
+  if (source) {
+    menu.value = source
+    reviewData.value.menu_id = source.menu_id
+    reviewData.value.foods = source.foods.map(food => ({
+      id: food.id,
+      name: food.name,
+      score: 0
+    }))
+    reviewData.value.avg_score = 0
+    reviewData.value.comment = ''
+  }
+})
+
+const getStarIcon = (score, index) => {
+  return score >= index ? 'mdi-star' : 'mdi-star-outline'
+}
 
 const setScore = (index, clickedScore) => {
-  if (!menu.value || !menu.value.foods) return
-
-  const current = menu.value.foods[index].score
+  const current = reviewData.value.foods[index].score
   const newScore = current === clickedScore ? 0 : clickedScore
+  reviewData.value.foods[index].score = newScore
 
-  menu.value.foods[index].score = newScore
+  // 평균 계산
+  const scores = reviewData.value.foods.map(f => f.score || 0)
+  const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
+  reviewData.value.avg_score = Number(avg.toFixed(1))
 
   const uuid = getOrCreateUUID()
-
   logStore.addLog({
     user_id: uuid,
     event_name: 'set_food_score_by_star',
     event_value: {
-      food_id: menu.value.foods[index].id,
+      food_id: reviewData.value.foods[index].id,
       now_score: newScore
     },
     page_name: 'review_view',
@@ -92,77 +136,45 @@ const setScore = (index, clickedScore) => {
   })
 }
 
-const getStarIcon = (score, index) => {
-  return score >= index ? 'mdi-star' : 'mdi-star-outline'
-}
-
-const comment = ref('')
-
-const submitComment = async () => {
-  if (!comment.value.trim()) return
-
-  const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/v1/menus/comments`
-  const uuid = getOrCreateUUID()
-
-  try {
-    await axios.post(API_URL, {
-      menu_id: menu.value.menu_id,
-      comment: comment.value,
-      created_at: toKSTDateTime(new Date())
-    }, {
-      headers: {
-        'user-id': uuid
-      }
-    })
-  } catch (error) {
-    console.error('한줄평 POST 실패:', error)
-  }
-}
-
-const avgScore = computed(() => {
-  const foods = menu.value?.foods || []
-  if (foods.length === 0) return 0
-
-  const total = foods.reduce((sum, food) => sum + food.score, 0)
-  return Number((total / foods.length).toFixed(1))
-})
-
 const submitReview = async () => {
-  if (!menu.value || !menu.value.foods) return
-  
-  const unReviewedItems = menu.value.foods.filter((item) => item.score === 0)
+  const unReviewedItems = reviewData.value.foods.filter(item => item.score === 0)
   if (unReviewedItems.length > 0) {
     const confirmSubmit = confirm('평가가 완료되지 않았습니다. 그래도 제출하시겠습니까?')
     if (!confirmSubmit) return
   }
 
-  menuStore.menus[props.menuIndex] = {
-    ...menuStore.menus[props.menuIndex],
-    avg_score: avgScore.value
-  }
-  
-  const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/v1/foods/score`
   const uuid = getOrCreateUUID()
-  const reviewList = menu.value.foods.map(food => ({
-    food_id: food.id,
-    score: food.score
-  }))
-  
+
+  // 1. 평점 POST
   try {
-    await axios.post(API_URL, reviewList, {
+    await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/foods/score`, reviewData.value.foods, {
       headers: { 'user-id': uuid }
     })
   } catch (error) {
     console.error('리뷰 POST 실패:', error)
   }
 
-  await submitComment()
+  // 2. 한줄평 POST
+  if (reviewData.value.comment.trim()) {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/menus/comments`, {
+        menu_id: reviewData.value.menu_id,
+        comment: reviewData.value.comment,
+        created_at: toKSTDateTime(new Date())
+      }, {
+        headers: { 'user-id': uuid }
+      })
+    } catch (error) {
+      console.error('한줄평 POST 실패:', error)
+    }
+  }
 
+  // 3. 완료 화면 이동
   router.push({
     name: 'review-completed',
     params: {
       date: dateStore.date,
-      menuId: menu.value.menu_id
+      menuId: reviewData.value.menu_id
     }
   })
 }
@@ -170,20 +182,22 @@ const submitReview = async () => {
 
 <style scoped>
 .review-card {
-  max-width: 400px;
+  max-width: 440px;
   margin: auto;
-  padding: 20px;
-  background-color: white;
+  padding: 28px 24px;
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .star-icon {
-  font-size: 22px;
+  font-size: 24px;
   color: #fbc02d;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.2s ease;
 }
 
 .star-icon:hover {
-  transform: scale(1.1);
+  transform: scale(1.2);
 }
 </style>
