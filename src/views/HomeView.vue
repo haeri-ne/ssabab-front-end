@@ -12,7 +12,7 @@
             contain
           />
         </v-card>
-        <p class="banner-caption">5초 후에 배너가 닫힙니다</p>
+        <p class="banner-caption">{{ countdown }}초 후에 배너가 닫힙니다.</p>
       </div>
     </v-row>
 
@@ -47,15 +47,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const showBanner = ref(true)
+const countdown = ref(5)
+let timer = null
 
 onMounted(() => {
-  setTimeout(() => {
-    showBanner.value = false
-  }, 5000)
+  timer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) {
+      clearInterval(timer)
+      showBanner.value = false
+    }
+  }, 1000)
 })
+
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
+
 </script>
 
 <style scoped>
