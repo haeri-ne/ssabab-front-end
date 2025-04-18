@@ -17,7 +17,7 @@ export default defineConfig({
         start_url: '/',
         display: 'fullscreen',
         background_color: '#ffffff',
-        theme_color: '#2b9fed',
+        theme_color: '#ffffff',
         icons: [
           {
             src: 'https://ssabab.com/icons/icon-192x192.png',
