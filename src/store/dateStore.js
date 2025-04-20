@@ -1,25 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { toKSTDate } from '../utils/timeUtil'
+import dayjs from 'dayjs'
 
 export const useDateStore = defineStore('date', () => {
-  // 보여줘야 하는 메뉴의 날짜
-  const date = ref(toKSTDate(new Date()))
+  // 메뉴 날짜
+  const menusDate = ref(dayjs().format('YYYY-MM-DD'))
 
-
-  // 날짜를 "YYYY-MM-DD" 형식으로 설정
-  const setDate = (newDate) => {
-    if (typeof newDate === 'string') {
-      date.value = newDate
-    } else if (newDate instanceof Date && !isNaN(newDate)) {
-      date.value = toKSTDate(newDate)
-    } else {
-      console.warn('[dateStore] 잘못된 날짜 값:', newDate)
-    }
+  // 메뉴 날짜 설정하는 함수
+  const setMenusDate = (newMenusDate) => {
+    menusDate.value = newMenusDate
   }
 
   return { 
-    date, 
-    setDate 
+    menusDate, 
+    setMenusDate,
   }
 })

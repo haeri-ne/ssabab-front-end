@@ -10,7 +10,7 @@
     
     <!-- 평균 평점 -->
     <div class="text-caption text-center mb-2">
-      평균 별점 ⭐ {{ props.menu.avg_score.toFixed(1) }}
+      평균 별점 ⭐ {{ formattedMenuAvgScore }}
     </div>
 
     <v-divider class="my-1" />
@@ -18,14 +18,14 @@
     <!-- 메뉴 리스트 (6개 고정) -->
     <v-list class="pa-0" density="compact">
       <v-list-item
-        v-for="(food, index) in paddedFoods"
+        v-for="(food, index) in props.menu.foods"
         :key="index"
         class="text-center px-0 py-0"
       >
-        <v-list-item-title class="text-body-2 d-flex justify-space-between px-3">
-          <span>{{ food.name }}</span>
-          <span v-if="food.name" class="text-caption font-weight-medium">
-            ⭐ {{ food.score.toFixed(0) }}
+        <v-list-item-title v-if="food.food_id" class="text-body-2 d-flex justify-space-between px-3">
+          <span>{{ food.food_name }}</span>
+          <span class="text-caption font-weight-medium">
+            ⭐ {{ formattedFoodAvgScores[index] }}
           </span>
         </v-list-item-title>
       </v-list-item>
@@ -39,12 +39,14 @@ import { useRouter } from 'vue-router'
 import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
 import { useMenuStore } from '../store/menuStore'
-import { toKSTDateTime } from '../utils/timeUtil'
+import { useUserStore } from '../store/userStore'
 import { getOrCreateUUID } from '../utils/uuidUtil'
+import dayjs from 'dayjs'
 
 const props = defineProps({
   menu: Object,
-  menuIndex: Number
+  menuIndex: Number,
+  isVote: Boolean
 })
 
 const router = useRouter()
@@ -52,29 +54,46 @@ const router = useRouter()
 const dateStore = useDateStore()
 const logStore = useLogStore()
 const menuStore = useMenuStore()
+const userStore = useUserStore()
 
-const paddedFoods = computed(() => {
-  const foods = props.menu?.foods || []
-  return [...foods, ...Array(6 - foods.length).fill({ name: '' })].slice(0, 6)
+const formattedMenuAvgScore = computed(() => {
+  const score = props.menu.menu_avg_score
+  return typeof score === 'number' ? score.toFixed(2) : '0.00'
 })
 
-const goToReview = () => {
-  menuStore.selectedMenuIndex = props.menuIndex
+const formattedFoodAvgScores = computed(() => {
+  return props.menu.foods.map((food) => {
+    const score = food.food_avg_score
+    return typeof score === 'number' ? score.toFixed(1) : '0.0'
+  })
+})
 
-  const uuid = getOrCreateUUID()
-
+const logClickMenu = () => {
   logStore.addLog({
-    user_id: uuid,
+    user_id: getOrCreateUUID(),
     event_name: 'click_menu',
     event_value: { menu_id: props.menu.menu_id },
     page_name: 'menus_view',
-    event_time: toKSTDateTime(new Date())
+    event_time: dayjs().format('YYYY-MM-DD HH:mm:ss')
   })
+}
+
+const goToReview = () => {
+  if (props.isVote) return
+
+  if (userStore.reviewedMenuId && userStore.reviewedMenuId !== props.menu.menu_id) {
+    alert('이미 다른 메뉴에 별점을 남기셨습니다!')
+    return
+  }
+
+  menuStore.setSelectedMenuIndex(props.menuIndex)
+
+  logClickMenu()
 
   router.push({
     name: 'review',
     params: {
-      date: dateStore.date,
+      date: dateStore.menusDate,
       menuId: props.menu.menu_id
     }
   })
@@ -100,7 +119,6 @@ const goToReview = () => {
 .card-title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1976d2;
   text-align: center;
   margin-bottom: 4px;
 }

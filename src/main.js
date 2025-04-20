@@ -4,8 +4,13 @@ import router from './router'
 import vuetify from './plugins/vuetify'
 import App from './App.vue'
 
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+dayjs.tz.setDefault('Asia/Seoul')
 
 const app = createApp(App)
 const pinia = createPinia()
