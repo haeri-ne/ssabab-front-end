@@ -26,6 +26,7 @@ export const useLogStore = defineStore('log', () => {
           'user-id': uuid
         }
       })
+    logs.value = []
     } catch (error) {
       console.error('로그 전송 실패:', error)
     }

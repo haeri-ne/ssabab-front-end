@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref } from 'vue'
 import { useDateStore } from '../store/dateStore'
 import { getOrCreateUUID } from '../utils/uuidUtil'
 import axios from 'axios'
@@ -8,8 +8,41 @@ import axios from 'axios'
 function createEmptyMenu() {
   return {
     menu_id: null,
-    foods: [],
-    avg_score: 0
+    foods: [
+      {
+        food_id: null,
+        food_name: null,
+        food_avg_score: null
+      },
+      {
+        food_id: null,
+        food_name: null,
+        food_avg_score: null
+      },
+      {
+        food_id: null,
+        food_name: null,
+        food_avg_score: null
+      },
+      {
+        food_id: null,
+        food_name: null,
+        food_avg_score: null
+      },
+      {
+        food_id: null,
+        food_name: null,
+        food_avg_score: null
+      },
+      {
+        food_id: null,
+        food_name: null,
+        food_avg_score: null
+      }
+    ],
+    menu_date: null,
+    menu_avg_score: null,
+    menu_vote_count: null
   }
 }
 
@@ -17,57 +50,98 @@ export const useMenuStore = defineStore('menu', () => {
   const menus = ref([createEmptyMenu(), createEmptyMenu()])
   const selectedMenuIndex = ref(null)
 
+  const setSelectedMenuIndex = (newSelectedMenuIndex) => {
+    selectedMenuIndex.value = newSelectedMenuIndex
+  }
+
   const dateStore = useDateStore()
-  const date = computed(() => dateStore.date)
+  const uuid = getOrCreateUUID()
+  
+  const getRatingsByDate = async () => {
+    if (dateStore.menusDate !== menus.value[0].menu_date) return
 
-  // 마지막으로 메뉴를 가져온 날짜 저장
-  const lastFetchedDate = ref(null)
-
-  // 메뉴 조회 함수
-  const getMenusByDate = async () => {
-    const uuid = getOrCreateUUID()
-    const url = `${import.meta.env.VITE_API_BASE_URL}/api/v1/menus/${date.value}`
-
-    try {
-      const res = await axios.get(url, {
-        headers: { 'user-id': uuid }
-      })
-
-      // 마지막으로 메뉴를 가져온 날짜와 현재 지정된 날짜가 다르면
-      // 각 음식의 score를 0으로 설정, avg_rating을 0으로 설정
-      // 반대의 경우, 각 음식의 score를 원래 값으로 설정, avg_rating을 원래 값으로 설정
-      const isNewDate = lastFetchedDate.value !== date.value
-      lastFetchedDate.value = date.value
-
-      menus.value = res.data.map((menu, i) => {
-        const oldFoods = menus.value[i]?.foods || []
-
-        const foods = menu.foods.map(food => {
-          const old = oldFoods.find(f => f.id === food.id)
-          return {
-            ...food,
-            score: isNewDate ? 0 : (old?.score ?? 0)
+    for (const menu of menus.value) {
+      try {
+        const ratingsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/statistics/mean/menus/${menu.menu_id}`, {
+          headers: {'user-id': uuid},
+          params: {
+            menu_id: menu.menu_id,
+            date: menu.menu_date
           }
         })
 
-        return {
-          menu_id: menu.id,
-          foods,
-          avg_score: isNewDate ? 0 : (menus.value[i]?.avg_score ?? 0)
+        const statMap = new Map(ratingsRes.data.foods_statistics.map(fs => [fs.food_id, fs.mean]))
+
+        let sum = 0
+        let count = 0
+
+        for (const food of menu.foods) {
+          if (statMap.has(food.food_id)) {
+            const mean = statMap.get(food.food_id)
+            food.food_avg_score = mean
+            sum += mean
+            count++
+          }
+        }
+
+        menu.menu_avg_score = count > 0 ? sum / count : 0
+      } catch (err) {
+        for (const food of menu.foods) {
+          food.food_avg_score = 0
+        }
+        menu.menu_avg_score = 0
+        console.warn('[예외 처리] 메뉴의 전체 평균 평점을 0으로 설정:', err)
+      }
+    }
+  }
+  
+  const getVoteCountsByDate = async () => {
+    if (dateStore.menusDate !== menus.value[0].menu_date) return
+
+    try {
+      const voteCountsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/votes/count`, {
+        headers: {'user-id': uuid},
+        params: {
+          menu1_id: menus.value[0].menu_id,
+          menu2_id: menus.value[1]. menu_id
         }
       })
+  
+      menus.value[0].menu_vote_count = voteCountsRes.data.menu1_count
+      menus.value[1].menu_vote_count = voteCountsRes.data.menu2_count
     } catch (err) {
-      console.error('메뉴 불러오기 실패:', err?.response?.data || err)
+      menus.value[0].menu_vote_count = 0
+      menus.value[1].menu_vote_count = 0
+      console.warn('[예외 처리] 두 메뉴의 투표 수를 0으로 설정:', err)
     }
   }
 
-  // 날짜 변경 시 자동 로딩
-  watch(date, () => {
-    getMenusByDate()
-  }, { immediate: true })
+  const getMenusByDate = async () => {
+    try {
+      const menusRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/menus/${dateStore.menusDate}`, {
+        headers: {'user-id': uuid}
+      })
+  
+      menusRes.data.forEach((newMenu, i) => {
+        menus.value[i].menu_id = newMenu.id
+        menus.value[i].menu_date = newMenu.date.slice(0, 10)
+        newMenu.foods.forEach((food, j) => {
+          menus.value[i].foods[j].food_id = food.id
+          menus.value[i].foods[j].food_name = food.name
+        })      
+      })
+  
+      await getRatingsByDate()
+      await getVoteCountsByDate()
+    } catch {
+      menus.value = [createEmptyMenu(), createEmptyMenu()]
+    }
+  }
+
+  
 
   return {
     menus, selectedMenuIndex,
-    getMenusByDate
+    setSelectedMenuIndex, getRatingsByDate, getVoteCountsByDate, getMenusByDate, 
   }
 })
