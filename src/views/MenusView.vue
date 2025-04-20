@@ -3,37 +3,23 @@
     <!-- <Header /> -->
 
     <div class="main-content">
-      <div class="card-grid">
-        <!-- 메뉴 카드 1 -->
-        <MenuCard
-          v-if="menuStore.menus.length > 0"
-          :menu="menuStore.menus[0]"
-          :menuIndex="0"
-        />
-
-        <!-- 메뉴 카드 2 -->
-        <MenuCard
-          v-if="menuStore.menus.length > 1"
-          :menu="menuStore.menus[1]"
-          :menuIndex="1"
-        />
-      </div>
-
-      <p class="instruction">별점을 남길 식단표를 눌러주세요</p>
+      <VotingPanel v-if="isBeforeNoon" />
+      <RatingPanel v-else />
     </div>
   </div>
 </template>
 
 <script setup>
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
 import { useMenuStore } from '../store/menuStore'
-import { toKSTDateTime } from '../utils/timeUtil'
 import { getOrCreateUUID } from '../utils/uuidUtil'
-import Header from '../components/Header.vue'
-import MenuCard from '../components/MenuCard.vue'
+// import Header from '../components/Header.vue'
+import VotingPanel from '../components/VotingPanel.vue'
+import RatingPanel from '../components/RatingPanel.vue'
+import dayjs from 'dayjs'
 
 const route = useRoute()
 
@@ -41,38 +27,36 @@ const dateStore = useDateStore()
 const logStore = useLogStore()
 const menuStore = useMenuStore()
 
-// URL → 로그 기록
+const isBeforeNoon = computed(() => {
+  const today = dayjs().format('YYYY-MM-DD')
+  return dateStore.menusDate === today && dayjs().hour() < 12
+})
+
+const logMenusView = () => {
+  logStore.addLog({
+    user_id: getOrCreateUUID(),
+    event_name: 'view_menus_screen',
+    event_value: {},
+    page_name: 'menus_view',
+    event_time: dayjs().format('YYYY-MM-DD HH:mm:ss')
+  })
+}
+
+// 다른 주소에서 메뉴 페이지로 넘어오면 로그 추가하기
 watch(
   () => route.fullPath,
   (newPath, oldPath) => {
-    if (newPath.startsWith('/menus/') && oldPath !== newPath) {
-      const uuid = getOrCreateUUID()
-      logStore.addLog({
-        user_id: uuid,
-        event_name: 'view_menus_screen',
-        event_value: {},
-        page_name: 'menus_view',
-        event_time: toKSTDateTime(new Date()),
-      })
+    if (newPath !== oldPath) {
+      logMenusView()
     }
   }
 )
 
-// route.params.date → dateStore.date
+// 라우터 주소에서 날짜가 바뀌었다면 새로 메뉴 데이터 불러오기
 watch(
   () => route.params.date,
-  (newDate) => {
-    if (newDate && newDate !== dateStore.date) {
-      dateStore.setDate(newDate)
-    }
-  },
-  { immediate: true }
-)
-
-// dateStore.date → 메뉴 다시 로딩
-watch(
-  () => dateStore.date,
   async () => {
+    dateStore.setMenusDate(route.params.date)
     await menuStore.getMenusByDate()
   },
   { immediate: true }
@@ -92,34 +76,8 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* ← 위쪽 정렬로 수정 */
+  justify-content: flex-start;
   gap: 16px;
   min-height: 100vh;
-}
-
-/* ✅ 카드 전체를 감싸는 영역에 최대 너비 제한 */
-.card-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 800px;     /* 최대 너비 제한 */
-  padding: 0 16px;       /* 양옆 여백 */
-  margin: 0 auto;        /* 가운데 정렬 */
-}
-
-@media (min-width: 768px) {
-  .card-grid {
-    flex-direction: row;
-    justify-content: center;
-    gap: 24px;
-  }
-}
-
-.instruction {
-  font-size: 0.9rem;
-  color: #666;
-  text-align: center;
-  margin-top: 8px;
 }
 </style>
