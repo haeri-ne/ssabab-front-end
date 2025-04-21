@@ -1,7 +1,7 @@
 <template>
   <v-container class="py-10 px-4 home-container">
     <!-- 🔰 로고 배너 (5초 후 자동 사라짐) -->
-    <v-row justify="center" class="mb-8" v-if="showBanner">
+    <v-row justify="center" class="mb-8">
       <div class="text-center">
         <v-card class="pa-4" flat tile>
           <v-img
@@ -12,12 +12,11 @@
             contain
           />
         </v-card>
-        <p class="banner-caption">{{ countdown }}초 후에 배너가 닫힙니다.</p>
       </div>
     </v-row>
 
     <!-- 📌 SSABAB 한 줄 소개 -->
-    <v-card class="pa-6 mb-6 text-center" elevation="2" rounded="xl">
+    <v-card class="pa-6 mb-6 text-center" elevation="2" rounded="xl" @click="goToSsabab">
       <h1 class="text-h6 font-weight-bold mb-2">SSABAB</h1>
       <p>
         SSAFY 대전 캠퍼스의 점심 메뉴를 더 맛있게 선택할 수 있도록,<br>
@@ -29,7 +28,7 @@
     <!-- 📢 공지사항 -->
     <v-card class="pa-6 mb-6" elevation="2" rounded="xl">
       <h2 class="text-subtitle-1 font-weight-bold mb-2">📢 공지사항</h2>
-      <p class="mb-1">🔔 <strong>2025.04.20</strong> - SSABAB 버전 1 배포 예정 🎉</p>
+      <p class="mb-1">🔔 <strong>2025.04.27</strong> - SSABAB 버전 1.1.0 출시 예정 🎉</p>
       <p class="mb-1">📨 기능 오류나 개선 요청은 mm을 통해 전달해주세요!!</p>
     </v-card>
 
@@ -47,26 +46,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { useDateStore } from '../store/dateStore'
+import dayjs from 'dayjs'
 
-const showBanner = ref(true)
-const countdown = ref(5)
-let timer = null
+const router = useRouter()
 
-onMounted(() => {
-  timer = setInterval(() => {
-    countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer)
-      showBanner.value = false
+const dateStore = useDateStore()
+
+const goToSsabab = () => {
+  dateStore.setMenusDate(dayjs().format('YYYY-MM-DD'))
+
+  router.push({
+    name: 'menus',
+    params: {
+      date: dateStore.menusDate,
     }
-  }, 1000)
-})
-
-onBeforeUnmount(() => {
-  if (timer) clearInterval(timer)
-})
-
+  })
+}
 </script>
 
 <style scoped>
@@ -82,11 +79,5 @@ ul {
 
 .banner-img {
   border-radius: 12px;
-}
-
-.banner-caption {
-  font-size: 0.85rem;
-  color: #888;
-  margin-top: 8px;
 }
 </style>
