@@ -102,11 +102,12 @@ const goToReview = () => {
 
 <style scoped>
 .menu-card {
-  width: 100%;
-  padding: 12px 10px;
+  width: 360px;
+  max-width: 100%;
+  padding: 16px;
   cursor: pointer;
   transition: box-shadow 0.2s ease;
-  min-height: 160px;
+  min-height: 180px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
