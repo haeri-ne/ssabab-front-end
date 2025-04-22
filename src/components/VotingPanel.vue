@@ -45,46 +45,74 @@ const validMenus = computed(() =>
   menuStore.menus.filter(menu => menu.menu_id !== null)
 )
 
-const voteForMenu = async (index) => {
-  const menu = validMenus.value[index]
-  const uuid = getOrCreateUUID()
+const uuid = getOrCreateUUID()
 
-  if (userStore.votedMenuId === menu.menu_id) {
+const logVoteMenu = () => {
+  logStore.addLog({
+    user_id: uuid,
+    event_name: 'vote_menu',
+    event_value: { menu_id: userStore.votedMenuId },
+    page_name: 'menus_view',
+    event_time: dayjs().format('YYYY-MM-DD HH:mm:ss')
+  })
+}
+
+const voteForMenu = async (index) => {
+  await userStore.getVotedMenuId()
+  const menu = validMenus.value[index]
+
+  if (userStore.votedMenuId === null) {   // 처음 투표할 때
+    try {
+      const request = {
+        created_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+        menu_id: menu.menu_id
+      }
+
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/votes/`, request, {
+        headers: { 'user-id': uuid }
+      })
+
+      await menuStore.getVoteCountsByDate()
+      userStore.setVotedMenuId(menu.menu_id)
+      logVoteMenu()
+    } catch (err) {
+      console.error('메뉴 투표 실패:', err)
+    }
+  }
+
+  else if (userStore.votedMenuId === menu.menu_id) {
     alert('이미 이 메뉴에 투표하셨습니다!')
     return
   }
 
-  if (userStore.votedMenuId !== null && userStore.votedMenuId !== menu.menu_id) {
+  else {
     const confirmChange = confirm('이미 다른 메뉴에 투표하셨습니다. 정말 이 메뉴로 변경하시겠습니까?')
-    
-    userStore.setVotedMenuId(menu.menu_id)
-
-    
     if (!confirmChange) return
-  }
 
-  try {
-    const request = {
-      created_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      menu_id: menu.menu_id
+    try {
+      const voteInfoRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/votes/${userStore.votedMenuId}`, {
+        headers: { 'user-id': uuid },
+        params: {
+          menu_id: menu.menu_id
+        }
+      })
+
+      const request = {
+        id: voteInfoRes.data.id,
+        created_at: voteInfoRes.data.created_at,
+        menu_id: menu.menu_id
+      }
+
+      await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/votes/`, request, {
+        headers: { 'user-id': voteInfoRes.data.user_id }
+      })
+      
+      await menuStore.getVoteCountsByDate()
+      userStore.setVotedMenuId(menu.menu_id)
+      logVoteMenu()
+    } catch (err) {
+      console.error('투표 정보 가져오기 및 수정하기 실패:', err)
     }
-
-    await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/votes/`, request, {
-      headers: { 'user-id': uuid }
-    })
-
-    logStore.addLog({
-      user_id: uuid,
-      event_name: 'vote_menu',
-      event_value: { menu_id: menu.menu_id },
-      page_name: 'menus_view',
-      event_time: dayjs().format('YYYY-MM-DD HH:mm:ss')
-    })
-
-    await menuStore.getVoteCountsByDate()
-    userStore.setVotedMenuId(menu.menu_id)
-  } catch (err) {
-    console.error('투표 실패:', err)
   }
 }
 </script>
