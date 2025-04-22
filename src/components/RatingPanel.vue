@@ -35,6 +35,13 @@ const validMenus = computed(() =>
   gap: 16px;
 }
 
+.instruction {
+  font-size: 0.9rem;
+  color: #444;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
 .card-grid {
   display: flex;
   flex-direction: column;
@@ -51,12 +58,5 @@ const validMenus = computed(() =>
     justify-content: center;
     gap: 24px;
   }
-}
-
-.instruction {
-  font-size: 0.9rem;
-  color: #666;
-  text-align: center;
-  margin-bottom: 8px;
 }
 </style>

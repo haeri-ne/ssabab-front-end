@@ -108,7 +108,7 @@ const voteForMenu = async (index) => {
 .card-grid {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   width: 100%;
   max-width: 800px;
   padding: 0 16px;
@@ -119,6 +119,7 @@ const voteForMenu = async (index) => {
   .card-grid {
     flex-direction: row;
     justify-content: center;
+    gap: 24px;
   }
 }
 
