@@ -62,7 +62,7 @@ export const useUserStore = defineStore('user', () => {
       catch {
         continue
       }
-    }    
+    }
   }
 
   const dateStore = useDateStore()
