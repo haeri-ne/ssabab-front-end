@@ -105,12 +105,11 @@ export const useMenuStore = defineStore('menu', () => {
         }
 
         menu.menu_avg_score = count > 0 ? sum / count : 0
-      } catch (err) {
+      } catch {
         for (const food of menu.foods) {
           food.food_avg_score = 0
         }
         menu.menu_avg_score = 0
-        console.error('외?!?!?!', err)
       }
     }
   }
