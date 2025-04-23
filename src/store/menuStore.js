@@ -88,7 +88,6 @@ export const useMenuStore = defineStore('menu', () => {
             date: menu.menu_date
           }
         })
-        console.log(menu.menu_date)
 
         const statMap = new Map(ratingsRes.data.foods_statistics.map(fs => [fs.food_id, fs.mean]))
 
