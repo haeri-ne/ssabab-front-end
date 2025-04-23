@@ -1,11 +1,11 @@
 <template>
   <div class="voting-panel">
-    <p class="instruction">오늘 마음에 드는 식단에 투표해주세요!</p>
+    <p class="instruction">마음에 드는 식단에 투표해주세요!</p>
 
     <div class="card-grid">
       <div
         v-for="(menu, index) in validMenus"
-        :key="index"
+        :key="menu.menu_id + '-' + dateStore.menusDate"
         class="menu-card-wrapper"
       >
         <MenuCard :menu="menu" :menuIndex="index" :isVote="true" />
@@ -29,6 +29,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
 import { useMenuStore } from '../store/menuStore'
 import { useUserStore } from '../store/userStore'
@@ -37,6 +38,7 @@ import dayjs from 'dayjs'
 import axios from 'axios'
 import MenuCard from './MenuCard.vue'
 
+const dateStore = useDateStore()
 const logStore = useLogStore()
 const menuStore = useMenuStore()
 const userStore = useUserStore()
@@ -61,7 +63,8 @@ const voteForMenu = async (index) => {
   await userStore.getVotedMenuId()
   const menu = validMenus.value[index]
 
-  if (userStore.votedMenuId === null) {   // 처음 투표할 때
+  // 처음 투표할 때
+  if (userStore.votedMenuId === null) {
     try {
       const request = {
         created_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
@@ -80,11 +83,13 @@ const voteForMenu = async (index) => {
     }
   }
 
+  // 이미 같은 메뉴에 투표한 적이 있을 때
   else if (userStore.votedMenuId === menu.menu_id) {
     alert('이미 이 메뉴에 투표하셨습니다!')
     return
   }
 
+  // 이미 다른 메뉴에 투표한 적이 있고, 이번에는 이 메뉴에 투표할 때
   else {
     const confirmChange = confirm('이미 다른 메뉴에 투표하셨습니다. 정말 이 메뉴로 변경하시겠습니까?')
     if (!confirmChange) return
@@ -136,6 +141,7 @@ const voteForMenu = async (index) => {
 .card-grid {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 16px;
   width: 100%;
   max-width: 800px;

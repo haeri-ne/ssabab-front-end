@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
-import { useDateStore } from './dateStore'
+import { ref } from 'vue'
 import { useMenuStore } from './menuStore'
 import { getOrCreateUUID } from '../utils/uuidUtil'
 import axios from 'axios'
@@ -20,6 +19,7 @@ export const useUserStore = defineStore('user', () => {
   const getVotedMenuId = async () => {
     const uuid = getOrCreateUUID()
     const menuStore = useMenuStore()
+    let found = false
 
     for (const menu of menuStore.menus) {
       try {
@@ -29,9 +29,9 @@ export const useUserStore = defineStore('user', () => {
             menu_id: menu.menu_id
           }
         })
-
         if (res.data) {
           votedMenuId.value = menu.menu_id
+          found = true
           break
         }
       }
@@ -39,11 +39,16 @@ export const useUserStore = defineStore('user', () => {
         continue
       }
     }
+
+    if (!found) {
+      votedMenuId.value = null
+    }
   }
 
   const getReviewedMenuId = async () => {
     const uuid = getOrCreateUUID()
     const menuStore = useMenuStore()
+    let found = false
     
     for (const menu of menuStore.menus) {
       try {
@@ -53,9 +58,9 @@ export const useUserStore = defineStore('user', () => {
             menu_id: menu.menu_id
           }
         })
-
-        if (res.data) {
+        if (res.data && res.data.length === menu.foods.length) {
           reviewedMenuId.value = menu.menu_id
+          found = true
           break
         }
       }
@@ -63,17 +68,11 @@ export const useUserStore = defineStore('user', () => {
         continue
       }
     }
-  }
 
-  const dateStore = useDateStore()
-  watch(
-    () => dateStore.menusDate,
-    async () => {
-      await getVotedMenuId()
-      await getReviewedMenuId()
-    },
-    { immediate: true }
-  )
+    if (!found) {
+      reviewedMenuId.value = null
+    }
+  }
 
   return {
     votedMenuId, reviewedMenuId,

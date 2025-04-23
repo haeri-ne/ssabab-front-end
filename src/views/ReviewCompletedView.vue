@@ -75,7 +75,7 @@ const goToHome = () => {
 
 <style scoped>
 .full-screen-center {
-  height: 100vh;
+  height: calc(100vh - 120px);
   display: flex;
   justify-content: center;
   align-items: center;
