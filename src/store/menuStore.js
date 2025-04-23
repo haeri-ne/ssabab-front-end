@@ -57,6 +57,26 @@ export const useMenuStore = defineStore('menu', () => {
   const dateStore = useDateStore()
   const uuid = getOrCreateUUID()
   
+  const getVoteCountsByDate = async () => {
+    if (dateStore.menusDate !== menus.value[0].menu_date) return
+
+    try {
+      const voteCountsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/votes/count`, {
+        headers: {'user-id': uuid},
+        params: {
+          menu1_id: menus.value[0].menu_id,
+          menu2_id: menus.value[1]. menu_id
+        }
+      })
+  
+      menus.value[0].menu_vote_count = voteCountsRes.data.menu1_count
+      menus.value[1].menu_vote_count = voteCountsRes.data.menu2_count
+    } catch {
+      menus.value[0].menu_vote_count = 0
+      menus.value[1].menu_vote_count = 0
+    }
+  }
+  
   const getRatingsByDate = async () => {
     if (dateStore.menusDate !== menus.value[0].menu_date) return
 
@@ -65,10 +85,10 @@ export const useMenuStore = defineStore('menu', () => {
         const ratingsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/statistics/mean/menus/${menu.menu_id}`, {
           headers: {'user-id': uuid},
           params: {
-            menu_id: menu.menu_id,
             date: menu.menu_date
           }
         })
+        console.log(menu.menu_date)
 
         const statMap = new Map(ratingsRes.data.foods_statistics.map(fs => [fs.food_id, fs.mean]))
 
@@ -90,29 +110,8 @@ export const useMenuStore = defineStore('menu', () => {
           food.food_avg_score = 0
         }
         menu.menu_avg_score = 0
-        console.warn('[예외 처리] 메뉴의 전체 평균 평점을 0으로 설정:', err)
+        console.error('외?!?!?!', err)
       }
-    }
-  }
-  
-  const getVoteCountsByDate = async () => {
-    if (dateStore.menusDate !== menus.value[0].menu_date) return
-
-    try {
-      const voteCountsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/votes/count`, {
-        headers: {'user-id': uuid},
-        params: {
-          menu1_id: menus.value[0].menu_id,
-          menu2_id: menus.value[1]. menu_id
-        }
-      })
-  
-      menus.value[0].menu_vote_count = voteCountsRes.data.menu1_count
-      menus.value[1].menu_vote_count = voteCountsRes.data.menu2_count
-    } catch (err) {
-      menus.value[0].menu_vote_count = 0
-      menus.value[1].menu_vote_count = 0
-      console.warn('[예외 처리] 두 메뉴의 투표 수를 0으로 설정:', err)
     }
   }
 
@@ -130,18 +129,13 @@ export const useMenuStore = defineStore('menu', () => {
           menus.value[i].foods[j].food_name = food.name
         })      
       })
-  
-      await getRatingsByDate()
-      await getVoteCountsByDate()
     } catch {
       menus.value = [createEmptyMenu(), createEmptyMenu()]
     }
   }
-
   
-
   return {
     menus, selectedMenuIndex,
-    setSelectedMenuIndex, getRatingsByDate, getVoteCountsByDate, getMenusByDate, 
+    setSelectedMenuIndex, getMenusByDate, getVoteCountsByDate, getRatingsByDate, 
   }
 })

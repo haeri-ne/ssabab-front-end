@@ -1,11 +1,11 @@
 <template>
   <div class="rating-panel">
-    <p class="instruction">오늘 드신 메뉴를 눌러 별점을 남겨주세요!</p>
+    <p class="instruction">드신 메뉴를 눌러 별점을 남겨주세요!</p>
 
     <div class="card-grid">
       <MenuCard
         v-for="(menu, index) in validMenus"
-        :key="index"
+        :key="menu.menu_id + '-' + dateStore.menusDate"
         :menu="menu"
         :menuIndex="index"
         :isVote="false"
@@ -16,9 +16,11 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useDateStore } from '../store/dateStore'
 import { useMenuStore } from '../store/menuStore'
 import MenuCard from './MenuCard.vue'
 
+const dateStore = useDateStore()
 const menuStore = useMenuStore()
 
 const validMenus = computed(() =>
@@ -45,6 +47,7 @@ const validMenus = computed(() =>
 .card-grid {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 16px;
   width: 100%;
   max-width: 800px;

@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDateStore } from '../store/dateStore'
 import { useLogStore } from '../store/logStore'
@@ -29,7 +29,7 @@ const menuStore = useMenuStore()
 
 const isBeforeNoon = computed(() => {
   const today = dayjs().format('YYYY-MM-DD')
-  return dateStore.menusDate === today && dayjs().hour() < 12
+  return (dateStore.menusDate === today && dayjs().hour() < 12) || (dateStore.menusDate > today)
 })
 
 const logMenusView = () => {
@@ -42,12 +42,22 @@ const logMenusView = () => {
   })
 }
 
+// 첫 진입 시 메뉴 불러오기
+onMounted(async () => {
+  await menuStore.getMenusByDate()
+  if (isBeforeNoon.value) { await menuStore.getVoteCountsByDate() }
+  else { await menuStore.getRatingsByDate() }
+})
+
 // 다른 주소에서 메뉴 페이지로 넘어오면 로그 추가하기
 watch(
   () => route.fullPath,
-  (newPath, oldPath) => {
+  async (newPath, oldPath) => {
     if (newPath !== oldPath) {
       logMenusView()
+      await menuStore.getMenusByDate()
+      if (isBeforeNoon.value) { await menuStore.getVoteCountsByDate() }
+      else { await menuStore.getRatingsByDate() }
     }
   }
 )
@@ -58,6 +68,8 @@ watch(
   async () => {
     dateStore.setMenusDate(route.params.date)
     await menuStore.getMenusByDate()
+    if (isBeforeNoon.value) { await menuStore.getVoteCountsByDate() }
+    else { await menuStore.getRatingsByDate() }
   },
   { immediate: true }
 )
