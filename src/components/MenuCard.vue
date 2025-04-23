@@ -78,9 +78,11 @@ const logClickMenu = () => {
   })
 }
 
-const goToReview = () => {
-  if (props.isVote) return
+const goToReview = async () => {
+  if (props.isVote) return  // 투표 페이지면 못 누르게 함
 
+  await userStore.getReviewedMenuId()
+  
   if (userStore.reviewedMenuId && userStore.reviewedMenuId !== props.menu.menu_id) {
     alert('이미 다른 메뉴에 별점을 남기셨습니다!')
     return

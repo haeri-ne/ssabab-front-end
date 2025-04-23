@@ -5,11 +5,7 @@
 
     <!-- 리뷰 카드 영역 -->
     <v-main>
-      <v-container
-        class="fill-height d-flex justify-center align-center pt-0"
-        fluid
-      >
-        <!-- ReviewCard 자체가 카드 스타일 담당 -->
+      <v-container>
         <ReviewCard 
         :menu="menuStore.menus[menuStore.selectedMenuIndex]"
         :menuIndex="menuStore.selectedMenuIndex" 
