@@ -7,6 +7,7 @@ import AdminView from '../views/AdminView.vue'
 import AnalyticsView from '../views/AnalyticsView.vue'
 import SsafeeView from '../views/SsafeeView.vue'
 import AuthView from '../views/AuthView.vue'
+import dayjs from 'dayjs'
 
 const getTodayDateString = () => {
   const today = new Date()
@@ -17,8 +18,14 @@ const getTodayDateString = () => {
 }
 
 const routes = [
-  // ✅ 첫 진입은 홈으로
-  { path: '/', redirect: '/home' },
+  // ✅ 첫 진입은 메뉴 페이지로
+  { 
+    path: '/', 
+    redirect: () => {
+      const today = dayjs().format('YYYY-MM-DD')
+      return `/menus/${today}`
+    } 
+  },
   { path: '/home', name: 'home-page', component: HomeView },
 
   // ✅ 기존 MenusView는 SSABAB 메뉴로 이동
