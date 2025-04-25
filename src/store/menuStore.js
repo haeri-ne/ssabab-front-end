@@ -83,10 +83,7 @@ export const useMenuStore = defineStore('menu', () => {
     for (const menu of menus.value) {
       try {
         const ratingsRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/v1/statistics/mean/menus/${menu.menu_id}`, {
-          headers: {'user-id': uuid},
-          params: {
-            date: menu.menu_date
-          }
+          headers: {'user-id': uuid}
         })
 
         const statMap = new Map(ratingsRes.data.foods_statistics.map(fs => [fs.food_id, fs.mean]))
